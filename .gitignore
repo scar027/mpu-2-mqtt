@@ -1,0 +1,6 @@
+build/
+main/cert/*
+main/mqtt_eclipseprojects_io.pem
+sdkconfig
+dependencies.lock
+sdkconfig.old
