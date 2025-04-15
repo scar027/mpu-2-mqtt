@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <sys/param.h>
+#include <time.h>
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -113,12 +114,25 @@ void mqtt_publish_task(void *pvParameters) {
         continue;
       }
 
+      // Get HHMMSSmmm timestamp
+      time_t now = time(NULL);
+      struct tm *tm_info = localtime(&now);
+
+      int64_t micros_since_boot = esp_timer_get_time();
+      int millis = micros_since_boot % 1000000 / 1000;  // Get ms within the current second
+
+      char timestamp[11];  // HHMMSSmmm + null terminator
+
+      // Format the timestamp directly into the buffer
+      snprintf(timestamp, sizeof(timestamp), "%02d%02d%02d%03d", tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec, millis);
       char payload[512];
       snprintf(payload, sizeof(payload) - 1,
-               "{\"ax1\":%.2f,\"ay1\":%.2f,\"az1\":%.2f,"
+               "{\"time\":\"%s\","
+               "\"ax1\":%.2f,\"ay1\":%.2f,\"az1\":%.2f,"
                "\"gx1\":%.2f,\"gy1\":%.2f,\"gz1\":%.2f,"
                "\"ax2\":%.2f,\"ay2\":%.2f,\"az2\":%.2f,"
                "\"gx2\":%.2f,\"gy2\":%.2f,\"gz2\":%.2f}",
+               timestamp,
                dual_acce.acce_1.acce_x, dual_acce.acce_1.acce_y, dual_acce.acce_1.acce_z,
                dual_gyro.gyro_1.gyro_x, dual_gyro.gyro_1.gyro_y, dual_gyro.gyro_1.gyro_z,
                dual_acce.acce_2.acce_x, dual_acce.acce_2.acce_y, dual_acce.acce_2.acce_z,
